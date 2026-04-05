@@ -1,6 +1,7 @@
-# Environment variables
-client/.env
+
 server/.env
+client/.env
+
 
 # Firebase service account key
 server/firebaseServiceKey.json
