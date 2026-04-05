@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "../firebase";
+
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -11,6 +12,7 @@ import {
 } from "firebase/auth";
 
 import { loginUser } from "../api/auth.api";
+import { getMe } from "../api/user.api";
 
 const AuthContext = createContext();
 
@@ -18,76 +20,98 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Auto login if already authenticated
+  // 🔥 Handle Google Redirect Login
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-    if (firebaseUser) {
-      const token = await firebaseUser.getIdToken();
+    const handleRedirect = async () => {
+      const result = await getRedirectResult(auth);
 
-      const backendUser = await loginUser(token, "student");
+      if (result?.user) {
+        const token = await result.user.getIdToken();
 
-      setUser({ ...backendUser, token });
-    }
-    setLoading(false);
-  });
+        // create user if not exists
+        await loginUser(token, "student");
 
-  return () => unsubscribe();
-}, []);
-  
+        // fetch full user data
+        const backendUser = await getMe(token);
+
+        setUser({ ...backendUser, token });
+
+        window.location.href = "/dashboard";
+      }
+    };
+
+    handleRedirect();
+  }, []);
+
+  // 🔥 Auto Login (IMPORTANT)
   useEffect(() => {
-  const handleRedirect = async () => {
-    const result = await getRedirectResult(auth);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdToken();
 
-    if (result?.user) {
-      const token = await result.user.getIdToken();
+        // 🔥 ONLY get user (NOT login again)
+        const backendUser = await getMe(token);
 
-      const backendUser = await loginUser(token, "student");
+        setUser({ ...backendUser, token });
+      } else {
+        setUser(null);
+      }
 
-      setUser({ ...backendUser, token });
+      setLoading(false);
+    });
 
-      // 🔥 REDIRECT AFTER GOOGLE LOGIN
-      window.location.href = "/dashboard";
+    return () => unsubscribe();
+  }, []);
+
+  // 🔐 Email Login
+  const login = async (email, password, role) => {
+    const res = await signInWithEmailAndPassword(auth, email, password);
+
+    if (!res.user.emailVerified) {
+      throw new Error("Please verify your email first");
     }
+
+    const token = await res.user.getIdToken();
+
+    // 🔥 create user if new
+    await loginUser(token, role);
+
+    // 🔥 fetch full user
+    const backendUser = await getMe(token);
+
+    setUser({ ...backendUser, token });
   };
-
-  handleRedirect();
-}, []);
-
-  // 🔐 Login function
- const login = async (email, password, role) => {
-  const res = await signInWithEmailAndPassword(auth, email, password);
-
-  if (!res.user.emailVerified) {
-    throw new Error("Please verify your email first");
-  }
-
-  const token = await res.user.getIdToken();
-
-  const storedRole = localStorage.getItem("role");
-
-  const backendUser = await loginUser(token, role || storedRole);
-
-  setUser({ ...backendUser, token });
-};
 
   // 🚪 Logout
   const logout = async () => {
     await signOut(auth);
     setUser(null);
   };
-  //forgot password
+
+  // 🔁 Forgot Password
   const resetPassword = async (email) => {
-  await sendPasswordResetEmail(auth, email);
-  alert("Password reset email sent");
-};
-//google Login
-const googleLogin = async () => {
-  const provider = new GoogleAuthProvider();
-  await signInWithRedirect(auth, provider);
-};
+    await sendPasswordResetEmail(auth, email);
+    alert("Password reset email sent");
+  };
+
+  // 🔵 Google Login
+  const googleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, resetPassword, googleLogin, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        login,
+        logout,
+        resetPassword,
+        googleLogin,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

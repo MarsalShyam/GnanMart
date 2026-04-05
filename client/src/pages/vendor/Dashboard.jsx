@@ -1,11 +1,9 @@
-import React from 'react'
+import Layout from "../../components/layout/Layout";
 
-const Dashboard = () => {
+export default function VendorDashboard() {
   return (
-    <div>
+    <Layout>
       <h1>Vendor Dashboard</h1>
-    </div>
-  )
+    </Layout>
+  );
 }
-
-export default Dashboard
