@@ -16,6 +16,7 @@ import ProductDetails from "./pages/public/ProductDetails";
 
 // 🔥 FUTURE
 import Cart from "./pages/student/Cart";
+import AddProduct from "./pages/vendor/AddProduct.jsx";
 
 function App() {
   return (
@@ -55,6 +56,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/vendor/add-product"
+          element={
+            <ProtectedRoute>
+              <AddProduct />
             </ProtectedRoute>
           }
         />
