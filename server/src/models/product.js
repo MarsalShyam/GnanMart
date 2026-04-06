@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
-  name: String,
-  price: Number,
+  name: {type:String, required:true},
+  description: String,
+  price: { type: Number, required: true },
   category: String,
   stock: Number,
 
+  image: String, // for Phase 3 basic
+  
   vendorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
