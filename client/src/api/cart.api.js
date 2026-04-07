@@ -11,7 +11,6 @@ export const getCart = (token) =>
   });
 
 export const removeFromCart = (token, productId) =>
-  axios.delete("/cart", {
-    headers: { Authorization: `Bearer ${token}` },
-    data: { productId }
+  axios.delete(`/cart/${productId}`, {
+    headers: { Authorization: `Bearer ${token}` }
   });

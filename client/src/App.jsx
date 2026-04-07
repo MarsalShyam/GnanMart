@@ -17,6 +17,10 @@ import ProductDetails from "./pages/public/ProductDetails";
 // 🔥 FUTURE
 import Cart from "./pages/student/Cart";
 import AddProduct from "./pages/vendor/AddProduct.jsx";
+import Dashboard from "./pages/vendor/Dashboard.jsx";
+
+import VendorProducts from "./pages/vendor/Products.jsx";
+import Wishlist from "./pages/student/Wishlist.jsx";
 
 function App() {
   return (
@@ -42,6 +46,10 @@ function App() {
           }
         />
 
+        <Route path="/wishlist" element={<ProtectedRoute>
+            <Wishlist/>
+        </ProtectedRoute>}
+        />
         <Route
           path="/profile"
           element={
@@ -68,7 +76,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
+        <Route path="/vendor/dashboard" element={<Dashboard/>}/>
 
+        <Route path="/vendor/products" element={<VendorProducts />} />
       </Routes>
     </BrowserRouter>
   );

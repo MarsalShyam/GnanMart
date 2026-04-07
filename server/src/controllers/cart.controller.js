@@ -1,5 +1,6 @@
 // const Cart = require("../models/Cart");
 import Cart from "../models/cart.js";
+import Product from "../models/product.js"
 
 // Add to cart
 export const addToCart = async (req, res) => {
@@ -35,6 +36,8 @@ export const getCart = async (req, res) => {
   const cart = await Cart.findOne({ userId: req.user.id })
     .populate("items.productId");
 
+  if(!cart) return res.json({items:[]});
+
   res.json(cart);
 };
 
@@ -43,6 +46,8 @@ export const removeFromCart = async (req, res) => {
   const { productId } = req.body;
 
   const cart = await Cart.findOne({ userId: req.user.id });
+
+  if (!cart) return res.json({ items: [] });
 
   cart.items = cart.items.filter(
     item => item.productId.toString() !== productId

@@ -16,44 +16,50 @@ import { getMe } from "../api/user.api";
 
 const AuthContext = createContext();
 
+export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Handle Google Redirect Login
+  // 🔥 GOOGLE REDIRECT LOGIN
   useEffect(() => {
     const handleRedirect = async () => {
-      const result = await getRedirectResult(auth);
+      try {
+        const result = await getRedirectResult(auth);
 
-      if (result?.user) {
-        const token = await result.user.getIdToken();
+        if (result?.user) {
+          const token = await result.user.getIdToken();
 
-        // create user if not exists
-        await loginUser(token, "student");
+          // create user if not exists (default student)
+          await loginUser(token, "student");
 
-        // fetch full user data
-        const backendUser = await getMe(token);
+          const backendUser = await getMe(token);
 
-        setUser({ ...backendUser, token });
-
-        window.location.href = "/dashboard";
+          setUser({ ...backendUser, token });
+        }
+      } catch (err) {
+        console.log("Redirect error:", err);
       }
     };
 
     handleRedirect();
   }, []);
 
-  // 🔥 Auto Login (IMPORTANT)
+  // 🔥 AUTO LOGIN (MOST IMPORTANT)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
+      try {
+        if (firebaseUser) {
+          const token = await firebaseUser.getIdToken();
 
-        // 🔥 ONLY get user (NOT login again)
-        const backendUser = await getMe(token);
+          const backendUser = await getMe(token);
 
-        setUser({ ...backendUser, token });
-      } else {
+          setUser({ ...backendUser, token });
+        } else {
+          setUser(null); // ✅ FIX
+        }
+      } catch (err) {
+        console.log(err);
         setUser(null);
       }
 
@@ -63,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // 🔐 Email Login
+  // 🔐 EMAIL LOGIN
   const login = async (email, password, role) => {
     const res = await signInWithEmailAndPassword(auth, email, password);
 
@@ -73,28 +79,27 @@ export const AuthProvider = ({ children }) => {
 
     const token = await res.user.getIdToken();
 
-    // 🔥 create user if new
+    // create user if new
     await loginUser(token, role);
 
-    // 🔥 fetch full user
     const backendUser = await getMe(token);
 
     setUser({ ...backendUser, token });
   };
 
-  // 🚪 Logout
+  // 🚪 LOGOUT
   const logout = async () => {
     await signOut(auth);
     setUser(null);
   };
 
-  // 🔁 Forgot Password
+  // 🔁 RESET PASSWORD
   const resetPassword = async (email) => {
     await sendPasswordResetEmail(auth, email);
     alert("Password reset email sent");
   };
 
-  // 🔵 Google Login
+  // 🔵 GOOGLE LOGIN
   const googleLogin = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
@@ -117,4 +122,3 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);

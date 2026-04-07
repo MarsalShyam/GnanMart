@@ -2,7 +2,7 @@ import User from "../models/User.js";
 
 export const loginUser = async (req, res) => {
   const { uid, email, name } = req.user;
-  const {role}=req.body;
+  const { role } = req.body;
 
   let user = await User.findOne({ email });
 
@@ -11,9 +11,10 @@ export const loginUser = async (req, res) => {
       name,
       email,
       firebaseUID: uid,
-      role:role || "student"
+      role: role || "student",
     });
   }
 
+  // ✅ ALWAYS RETURN ROLE
   res.json(user);
 };
