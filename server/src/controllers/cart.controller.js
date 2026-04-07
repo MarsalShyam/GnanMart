@@ -7,6 +7,16 @@ export const addToCart = async (req, res) => {
   const userId = req.user.id;
   const { productId } = req.body;
 
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    return res.status(404).json({ message: "Product not found" });
+  }
+
+  if (product.stock <= 0) {
+    return res.status(400).json({ message: "Out of stock" });
+  }
+
   let cart = await Cart.findOne({ userId });
 
   if (!cart) {
@@ -36,7 +46,7 @@ export const getCart = async (req, res) => {
   const cart = await Cart.findOne({ userId: req.user.id })
     .populate("items.productId");
 
-  if(!cart) return res.json({items:[]});
+  if (!cart) return res.json({ items: [] });
 
   res.json(cart);
 };
